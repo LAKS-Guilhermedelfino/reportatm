@@ -1,0 +1,124 @@
+/**
+ * LAKS Company — design tokens
+ * Fonte: Manual de Marca oficial (ver claude.md, seção 4).
+ * Tema escuro é o default da aplicação; tema claro é alternável via [data-theme="light"].
+ */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Paleta de marca */
+  --color-digital-orange: #ff4200;
+  --color-anti-flash-white: #ececec;
+  --color-grey: #b5b5b5;
+  --color-raisin-black: #0d0900;
+
+  /* Papéis semânticos — tema escuro (default) */
+  --background: var(--color-raisin-black);
+  --foreground: var(--color-anti-flash-white);
+
+  --surface-1: #161210;
+  --surface-2: #1f1a18;
+  --surface-3: #2a2422;
+  --border: rgba(236, 236, 236, 0.1);
+
+  --muted-foreground: var(--color-grey);
+
+  --primary: var(--color-digital-orange);
+  /* Nunca branco sobre laranja (3,5:1 reprova). Preto reduzido: 5,7:1. */
+  --primary-foreground: var(--color-raisin-black);
+
+  /* Cores funcionais — só em indicadores de status, nunca decorativas */
+  --success: #22c55e;
+  --warning: #f5a524;
+  --danger: #ef4444;
+  --neutral: var(--color-grey);
+
+  /* Superfícies e papéis exigidos pelos primitivos shadcn/ui, derivados da paleta LAKS */
+  --card: var(--surface-1);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--border);
+  --ring: var(--primary);
+
+  /* Paleta qualitativa para gráficos (Recharts) — Fase 4/6 podem refinar */
+  --chart-1: var(--color-digital-orange);
+  --chart-2: var(--success);
+  --chart-3: var(--warning);
+  --chart-4: var(--danger);
+  --chart-5: var(--color-grey);
+
+  --sidebar: var(--surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary);
+
+  /* Raios do manual de marca, seção 4.4: cards 8px / botões 6px / inputs 4px */
+  --radius-card: 8px;
+  --radius-button: 6px;
+  --radius-input: 4px;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --background: var(--color-anti-flash-white);
+  --foreground: var(--color-raisin-black);
+
+  --surface-1: #ffffff;
+  --surface-2: #f6f6f6;
+  --surface-3: #ebebeb;
+  --border: rgba(13, 9, 0, 0.1);
+
+  --muted-foreground: #6b6b6b;
+
+  --primary: var(--color-digital-orange);
+  --primary-foreground: var(--color-raisin-black);
+
+  --success: #16a34a;
+  --warning: #b45309;
+  --danger: #dc2626;
+  --neutral: var(--color-grey);
+
+  --card: var(--surface-1);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-1);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--border);
+  --ring: var(--primary);
+
+  --chart-1: var(--color-digital-orange);
+  --chart-2: var(--success);
+  --chart-3: var(--warning);
+  --chart-4: var(--danger);
+  --chart-5: var(--color-grey);
+
+  --sidebar: var(--surface-1);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--surface-3);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary);
+}
