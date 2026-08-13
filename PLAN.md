@@ -5,9 +5,15 @@ Plano de implementação fase a fase, conforme seção 12 do `claude.md`. Cada f
 ## Decisões já confirmadas com o gestor
 
 1. **Marca:** sem a pasta `LAKS COMPANY [IDV]/` por enquanto. Sigo com a alternativa da seção 4.2 (Archivo Expanded para títulos em caixa alta + Inter para texto corrido) e logo placeholder em `/public/brand`. Troco pelos arquivos e fontes reais assim que forem fornecidos, sem mudar a estrutura de tokens.
-2. **Supabase:** desenvolvimento com Supabase CLI local (Docker), `supabase start`, migrations aplicadas localmente, Auth e RLS testados contra a instância local. Conexão com um projeto Supabase real (produção) fica para antes do deploy — vou pedir as credenciais quando chegarmos lá.
+2. **Supabase:** sem Docker disponível neste ambiente, então trabalhando direto contra o projeto Supabase real (não local) desde a Fase 2 — `https://ftzckiliceenarubpuvy.supabase.co`, empresa "ATM Seguros" já cadastrada, migrations aplicadas via `supabase db push --db-url` (connection string do Session Pooler, ver `.env.local`). RLS testado com testes de integração reais (`tests/rls.integration.test.ts`), não pgTAP local.
 3. **Git:** `git init` já na Fase 1, com primeiro commit ao final da fase.
 4. **Nome do projeto:** `laks-report`, a menos que você indique outro nome depois.
+
+## Pendências conhecidas
+
+- **SMTP customizado no Supabase.** O serviço de e-mail padrão (Authentication → SMTP) é só para teste, com rate limit baixo por hora — já batemos nele durante os testes da Fase 2. Antes de convidar consultoras de verdade (Fase 6, tela `/consultoras`), configurar um provedor próprio (Resend, Postmark etc.) em Authentication → Settings → SMTP Settings no painel do Supabase.
+- **Redirect URLs no Supabase Auth.** Além de `http://localhost:3000/**`, quando o deploy de produção existir (Vercel), adicionar a URL de produção à lista de Redirect URLs, senão login/convite/recuperação de senha quebram em produção do mesmo jeito que quebraram localmente até corrigirmos isso na Fase 2.
+- **Senha temporária do admin.** A conta guilherme@lakscompany.com.br foi criada com senha temporária durante os testes da Fase 2; trocar por uma senha definitiva.
 
 Pendência que ainda pode aparecer: credenciais de um projeto Supabase real (produção) antes da Fase 8/9 para deploy na Vercel.
 
