@@ -55,7 +55,7 @@ export default async function HistoricoPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-1">
         <Link
           href="/meu-report"

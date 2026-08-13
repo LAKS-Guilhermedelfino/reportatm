@@ -28,7 +28,7 @@ export default async function MeuReportPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-1">
         <p className="text-sm capitalize text-muted-foreground">
           {formatDateLongPtBR(today)}

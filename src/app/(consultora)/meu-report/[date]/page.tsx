@@ -42,7 +42,7 @@ export default async function MeuReportDatePage({
 
   if (!editable) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="heading text-2xl text-foreground">
           {formatDateLongPtBR(date)}
         </h1>
@@ -63,7 +63,7 @@ export default async function MeuReportDatePage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-1">
         <p className="text-sm capitalize text-muted-foreground">
           {formatDateLongPtBR(date)}

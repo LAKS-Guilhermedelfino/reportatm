@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/layout/app-header";
@@ -33,7 +34,23 @@ export default async function ConsultoraLayout({
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="mx-auto max-w-2xl px-4 py-6">{children}</main>
+      <nav className="border-b border-border">
+        <div className="mx-auto flex max-w-4xl gap-4 px-4 py-2 text-sm">
+          <Link
+            href="/meu-report"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Meu report
+          </Link>
+          <Link
+            href="/meu-desempenho"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Meu desempenho
+          </Link>
+        </div>
+      </nav>
+      <main className="mx-auto max-w-4xl px-4 py-6">{children}</main>
     </div>
   );
 }
