@@ -46,3 +46,6 @@ next-env.d.ts
 
 # legacy / project-specific
 /config/config.php
+
+# harness runtime artifacts
+.claude/scheduled_tasks.lock
