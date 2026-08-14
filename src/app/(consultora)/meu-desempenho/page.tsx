@@ -20,6 +20,9 @@ import { KpiCards, type ResolvedGoal } from "./kpi-cards";
 import { Funnel } from "./funnel";
 import { EvolutionChart, type DailyPoint } from "@/components/charts/evolution-chart";
 import { HistoryTableView, buildHistoryRows, type HistoryReport } from "./history-table";
+import { loadDiagnosticsInput } from "@/lib/diagnostics/load-diagnostics-input";
+import { runDiagnostics } from "@/lib/diagnostics/run-diagnostics";
+import { FindingsList } from "@/components/diagnostics/findings-list";
 
 const VALID_TYPES: PeriodType[] = ["weekly", "biweekly", "monthly", "custom"];
 const TABS: PeriodTab[] = [
@@ -185,6 +188,16 @@ export default async function MeuDesempenhoPage({
   const prevHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
   const nextHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
 
+  const diagnosticsInput = await loadDiagnosticsInput(
+    supabase,
+    profile?.company_id ?? "",
+    user.id,
+    type,
+    period,
+    today,
+  );
+  const findings = runDiagnostics(diagnosticsInput);
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -216,6 +229,8 @@ export default async function MeuDesempenhoPage({
       <EvolutionChart data={evolutionData} />
 
       <Funnel totals={totals} />
+
+      <FindingsList findings={findings} />
 
       <HistoryTableView
         rows={historyRows}

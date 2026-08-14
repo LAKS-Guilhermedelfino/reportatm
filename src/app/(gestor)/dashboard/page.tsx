@@ -16,6 +16,9 @@ import { Matrix } from "./matrix";
 import { TeamFunnel } from "./team-funnel";
 import { Ranking, VALID_RANK_KEYS, type RankKey } from "./ranking";
 import { FillAlert } from "./fill-alert";
+import { TeamDiagnostics, type ConsultantFindings } from "./team-diagnostics";
+import { loadDiagnosticsInput } from "@/lib/diagnostics/load-diagnostics-input";
+import { runDiagnostics } from "@/lib/diagnostics/run-diagnostics";
 
 const VALID_TYPES: PeriodType[] = ["daily", "weekly", "biweekly", "monthly", "custom"];
 const TABS: PeriodTab[] = [
@@ -90,6 +93,13 @@ export default async function DashboardPage({
     };
   });
 
+  const perConsultantFindings: ConsultantFindings[] = await Promise.all(
+    teamData.consultants.map(async (c) => {
+      const input = await loadDiagnosticsInput(supabase, companyId, c.id, type, period, today);
+      return { id: c.id, fullName: c.fullName, findings: runDiagnostics(input) };
+    }),
+  );
+
   const prevHref = `/dashboard?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
   const nextHref = `/dashboard?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
   const baseQuery = `period=${type}&date=${referenceDate}`;
@@ -132,6 +142,8 @@ export default async function DashboardPage({
       </div>
 
       <EvolutionChart data={evolutionData} />
+
+      <TeamDiagnostics perConsultant={perConsultantFindings} />
     </div>
   );
 }

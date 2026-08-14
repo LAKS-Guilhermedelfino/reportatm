@@ -25,6 +25,9 @@ import {
   type HistoryReport,
 } from "@/app/(consultora)/meu-desempenho/history-table";
 import { TeamComparison } from "./team-comparison";
+import { loadDiagnosticsInput } from "@/lib/diagnostics/load-diagnostics-input";
+import { runDiagnostics } from "@/lib/diagnostics/run-diagnostics";
+import { FindingsList } from "@/components/diagnostics/findings-list";
 
 const VALID_TYPES: PeriodType[] = ["weekly", "biweekly", "monthly", "custom"];
 const TABS: PeriodTab[] = [
@@ -173,6 +176,16 @@ export default async function ConsultoraDetailPage({
   const prevHref = `/consultoras/${id}?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
   const nextHref = `/consultoras/${id}?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
 
+  const diagnosticsInput = await loadDiagnosticsInput(
+    supabase,
+    consultant.company_id,
+    id,
+    type,
+    period,
+    today,
+  );
+  const findings = runDiagnostics(diagnosticsInput);
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
@@ -217,6 +230,8 @@ export default async function ConsultoraDetailPage({
       </div>
 
       <EvolutionChart data={evolutionData} />
+
+      <FindingsList findings={findings} />
 
       <HistoryTableView
         rows={historyRows}
