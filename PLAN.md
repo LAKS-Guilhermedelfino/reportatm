@@ -13,9 +13,10 @@ Plano de implementação fase a fase, conforme seção 12 do `claude.md`. Cada f
 
 - **SMTP customizado no Supabase.** O serviço de e-mail padrão (Authentication → SMTP) é só para teste, com rate limit baixo por hora — já batemos nele durante os testes da Fase 2. Antes de convidar consultoras de verdade (Fase 6, tela `/consultoras`), configurar um provedor próprio (Resend, Postmark etc.) em Authentication → Settings → SMTP Settings no painel do Supabase.
 - **Redirect URLs no Supabase Auth.** Além de `http://localhost:3000/**`, quando o deploy de produção existir (Vercel), adicionar a URL de produção à lista de Redirect URLs, senão login/convite/recuperação de senha quebram em produção do mesmo jeito que quebraram localmente até corrigirmos isso na Fase 2.
-- **Senha temporária do admin.** A conta guilherme@lakscompany.com.br foi criada com senha temporária durante os testes da Fase 2; trocar por uma senha definitiva.
 
-Pendência que ainda pode aparecer: credenciais de um projeto Supabase real (produção) antes da Fase 8/9 para deploy na Vercel.
+~~Senha temporária do admin~~ — resolvido, guilherme@lakscompany.com.br já trocou pela senha definitiva.
+
+Ver [README.md](./README.md#pendências-conhecidas) para o checklist de deploy em produção (Fase 9).
 
 ---
 
