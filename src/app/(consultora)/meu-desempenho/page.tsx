@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todaySP } from "@/lib/dates/sao-paulo";
 import {
   adjacentPeriod,
+  countBusinessDays,
   dateRangeArray,
   getPeriod,
   type Period,
@@ -13,8 +14,9 @@ import {
   computeFillRate,
 } from "@/lib/metrics/period-aggregation";
 import { followupTotalDone, type DailyReportCounts } from "@/lib/metrics/rates";
+import { GOAL_INDICATORS } from "@/lib/metrics/goal-indicators";
 import { PeriodSelector } from "./period-selector";
-import { KpiCards } from "./kpi-cards";
+import { KpiCards, type ResolvedGoal } from "./kpi-cards";
 import { Funnel } from "./funnel";
 import { EvolutionChart, type DailyPoint } from "./evolution-chart";
 import { HistoryTableView, buildHistoryRows, type HistoryReport } from "./history-table";
@@ -137,6 +139,44 @@ export default async function MeuDesempenhoPage({
   );
   const historyRows = buildHistoryRows([...allDays].reverse(), historyReportsByDate);
 
+  // Meta: só faz sentido pra period_type alinhado ao que o gestor cadastra
+  // em /metas (weekly/biweekly/monthly) — período personalizado não resolve
+  // meta (não há uma base de comparação natural pra um range arbitrário).
+  let resolvedGoal: ResolvedGoal = null;
+  if (type !== "custom") {
+    const goalColumns = GOAL_INDICATORS.map((i) => i.key).join(",");
+    const { data: ownGoal } = await supabase
+      .from("goals")
+      .select(goalColumns)
+      .eq("company_id", profile?.company_id ?? "")
+      .eq("consultant_id", user.id)
+      .eq("period_type", type)
+      .eq("period_start", period.start)
+      .eq("period_end", period.end)
+      .maybeSingle();
+
+    if (ownGoal) {
+      resolvedGoal = ownGoal as unknown as ResolvedGoal;
+    } else {
+      const { data: defaultGoal } = await supabase
+        .from("goals")
+        .select(goalColumns)
+        .eq("company_id", profile?.company_id ?? "")
+        .is("consultant_id", null)
+        .eq("period_type", type)
+        .eq("period_start", period.start)
+        .eq("period_end", period.end)
+        .maybeSingle();
+      resolvedGoal = (defaultGoal as unknown as ResolvedGoal) ?? null;
+    }
+  }
+
+  const elapsedEnd = period.end < today ? period.end : today;
+  const businessDaysElapsed =
+    elapsedEnd < period.start
+      ? 0
+      : countBusinessDays(period.start, elapsedEnd, weekdayMask, holidayDates);
+
   const prevHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
   const nextHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
 
@@ -157,7 +197,13 @@ export default async function MeuDesempenhoPage({
         nextHref={nextHref}
       />
 
-      <KpiCards totals={totals} fillRate={fillRate} />
+      <KpiCards
+        totals={totals}
+        fillRate={fillRate}
+        goal={resolvedGoal}
+        businessDaysElapsed={businessDaysElapsed}
+        businessDaysTotal={businessDaysInPeriod.length}
+      />
 
       <EvolutionChart data={evolutionData} />
 
