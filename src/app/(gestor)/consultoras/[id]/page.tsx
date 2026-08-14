@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { todaySP } from "@/lib/dates/sao-paulo";
 import {
@@ -8,18 +10,21 @@ import {
   type Period,
   type PeriodType,
 } from "@/lib/dates/periods";
-import { isBusinessDay } from "@/lib/dates/business-days";
-import {
-  aggregateReports,
-  computeFillRate,
-} from "@/lib/metrics/period-aggregation";
+import { computeFillRate } from "@/lib/metrics/period-aggregation";
 import { followupTotalDone, type DailyReportCounts } from "@/lib/metrics/rates";
 import { GOAL_INDICATORS } from "@/lib/metrics/goal-indicators";
+import { loadTeamData } from "@/lib/dashboard/team-data";
 import { PeriodNav, type PeriodTab } from "@/components/period-nav";
-import { KpiCards, type ResolvedGoal } from "./kpi-cards";
-import { Funnel } from "./funnel";
 import { EvolutionChart, type DailyPoint } from "@/components/charts/evolution-chart";
-import { HistoryTableView, buildHistoryRows, type HistoryReport } from "./history-table";
+import { buttonVariants } from "@/components/ui/button";
+import { KpiCards, type ResolvedGoal } from "@/app/(consultora)/meu-desempenho/kpi-cards";
+import { Funnel } from "@/app/(consultora)/meu-desempenho/funnel";
+import {
+  HistoryTableView,
+  buildHistoryRows,
+  type HistoryReport,
+} from "@/app/(consultora)/meu-desempenho/history-table";
+import { TeamComparison } from "./team-comparison";
 
 const VALID_TYPES: PeriodType[] = ["weekly", "biweekly", "monthly", "custom"];
 const TABS: PeriodTab[] = [
@@ -52,13 +57,25 @@ function toCounts(r: {
   return { ...r };
 }
 
-export default async function MeuDesempenhoPage({
+export default async function ConsultoraDetailPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
+  const { id } = await params;
   const sp = await searchParams;
   const today = todaySP();
+
+  const supabase = await createClient();
+  const { data: consultant } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, company_id, started_at, active")
+    .eq("id", id)
+    .eq("role", "consultora")
+    .single();
+  if (!consultant) notFound();
 
   const type: PeriodType = VALID_TYPES.includes(sp.period as PeriodType)
     ? (sp.period as PeriodType)
@@ -68,54 +85,40 @@ export default async function MeuDesempenhoPage({
     type === "custom" && sp.start && sp.end
       ? { start: sp.start, end: sp.end }
       : undefined;
-
   const period = getPeriod(type, referenceDate, custom ?? { start: today, end: today });
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const [teamData, { data: reports }] = await Promise.all([
+    loadTeamData(supabase, consultant.company_id, type, period),
+    supabase
+      .from("daily_reports")
+      .select("*")
+      .eq("consultant_id", id)
+      .gte("report_date", period.start)
+      .lte("report_date", period.end),
+  ]);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, company_id")
-    .eq("id", user.id)
-    .single();
-
-  const [{ data: reports }, { data: businessDaysRow }, { data: holidaysRows }] =
-    await Promise.all([
-      supabase
-        .from("daily_reports")
-        .select("*")
-        .eq("consultant_id", user.id)
-        .gte("report_date", period.start)
-        .lte("report_date", period.end),
-      supabase
-        .from("business_days")
-        .select("weekday_mask")
-        .eq("company_id", profile?.company_id ?? "")
-        .maybeSingle(),
-      supabase
-        .from("holidays")
-        .select("date")
-        .eq("company_id", profile?.company_id ?? "")
-        .gte("date", period.start)
-        .lte("date", period.end),
-    ]);
-
-  const weekdayMask = businessDaysRow?.weekday_mask ?? 31;
-  const holidayDates = (holidaysRows ?? []).map((h) => h.date);
   const allDays = dateRangeArray(period.start, period.end);
-  const businessDaysInPeriod = allDays.filter((d) =>
-    isBusinessDay(d, weekdayMask, holidayDates),
-  );
-
   const reportsByDate = new Map((reports ?? []).map((r) => [r.report_date, r]));
-  const totals = aggregateReports((reports ?? []).map(toCounts));
+  const totals = (reports ?? [])
+    .map(toCounts)
+    .reduce<DailyReportCounts>(
+      (acc, r) => {
+        (Object.keys(acc) as (keyof DailyReportCounts)[]).forEach((k) => {
+          acc[k] += r[k];
+        });
+        return acc;
+      },
+      {
+        new_leads_received: 0, new_leads_contacted: 0, old_leads_contacted: 0, old_leads_replied: 0,
+        followup_cold_done: 0, followup_cold_replied: 0, followup_warm_done: 0, followup_warm_replied: 0,
+        followup_hot_done: 0, followup_hot_replied: 0, calls_made: 0, calls_answered: 0,
+        meetings_scheduled: 0, meetings_held: 0, quotes_sent: 0, negotiations_open: 0,
+        proposals_submitted: 0, sales_closed: 0, sales_amount_cents: 0,
+      },
+    );
   const fillRate = computeFillRate(
     (reports ?? []).map((r) => r.report_date),
-    businessDaysInPeriod,
+    teamData.businessDaysInPeriod,
   );
 
   const evolutionData: DailyPoint[] = allDays.map((date) => {
@@ -144,58 +147,53 @@ export default async function MeuDesempenhoPage({
   );
   const historyRows = buildHistoryRows([...allDays].reverse(), historyReportsByDate);
 
-  // Meta: só faz sentido pra period_type alinhado ao que o gestor cadastra
-  // em /metas (weekly/biweekly/monthly) — período personalizado não resolve
-  // meta (não há uma base de comparação natural pra um range arbitrário).
   let resolvedGoal: ResolvedGoal = null;
   if (type !== "custom") {
     const goalColumns = GOAL_INDICATORS.map((i) => i.key).join(",");
     const { data: ownGoal } = await supabase
       .from("goals")
       .select(goalColumns)
-      .eq("company_id", profile?.company_id ?? "")
-      .eq("consultant_id", user.id)
+      .eq("company_id", consultant.company_id)
+      .eq("consultant_id", id)
       .eq("period_type", type)
       .eq("period_start", period.start)
       .eq("period_end", period.end)
       .maybeSingle();
-
-    if (ownGoal) {
-      resolvedGoal = ownGoal as unknown as ResolvedGoal;
-    } else {
-      const { data: defaultGoal } = await supabase
-        .from("goals")
-        .select(goalColumns)
-        .eq("company_id", profile?.company_id ?? "")
-        .is("consultant_id", null)
-        .eq("period_type", type)
-        .eq("period_start", period.start)
-        .eq("period_end", period.end)
-        .maybeSingle();
-      resolvedGoal = (defaultGoal as unknown as ResolvedGoal) ?? null;
-    }
+    resolvedGoal = ownGoal
+      ? (ownGoal as unknown as ResolvedGoal)
+      : teamData.defaultGoal;
   }
 
   const elapsedEnd = period.end < today ? period.end : today;
   const businessDaysElapsed =
     elapsedEnd < period.start
       ? 0
-      : countBusinessDays(period.start, elapsedEnd, weekdayMask, holidayDates);
+      : countBusinessDays(period.start, elapsedEnd, teamData.weekdayMask, teamData.holidayDates);
 
-  const prevHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
-  const nextHref = `/meu-desempenho?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
+  const prevHref = `/consultoras/${id}?period=${type}&date=${adjacentPeriod(type, period, "prev").start}`;
+  const nextHref = `/consultoras/${id}?period=${type}&date=${adjacentPeriod(type, period, "next").start}`;
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="heading text-2xl text-foreground">Meu desempenho</h1>
-        <p className="text-sm text-muted-foreground">
-          {profile?.full_name}
-        </p>
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <div className="space-y-1">
+          <h1 className="heading text-2xl text-foreground">
+            {consultant.full_name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {consultant.email} · {consultant.active ? "ativa" : "inativa"}
+          </p>
+        </div>
+        <Link
+          href={`/consultoras/${id}/editar/${today}`}
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          Editar report de hoje
+        </Link>
       </header>
 
       <PeriodNav
-        basePath="/meu-desempenho"
+        basePath={`/consultoras/${id}`}
         tabs={TABS}
         type={type}
         period={period}
@@ -210,17 +208,20 @@ export default async function MeuDesempenhoPage({
         fillRate={fillRate}
         goal={resolvedGoal}
         businessDaysElapsed={businessDaysElapsed}
-        businessDaysTotal={businessDaysInPeriod.length}
+        businessDaysTotal={teamData.businessDaysInPeriod.length}
       />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Funnel totals={totals} />
+        <TeamComparison totals={totals} teamConsultants={teamData.consultants} />
+      </div>
 
       <EvolutionChart data={evolutionData} />
 
-      <Funnel totals={totals} />
-
       <HistoryTableView
         rows={historyRows}
-        weekdayMask={weekdayMask}
-        holidays={holidayDates}
+        weekdayMask={teamData.weekdayMask}
+        holidays={teamData.holidayDates}
       />
     </div>
   );

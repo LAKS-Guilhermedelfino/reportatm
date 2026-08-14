@@ -3,33 +3,39 @@ import { cn } from "@/lib/utils";
 import type { Period, PeriodType } from "@/lib/dates/periods";
 import { formatDateLongPtBR } from "@/lib/dates/sao-paulo";
 
-const TABS: { type: PeriodType; label: string }[] = [
-  { type: "weekly", label: "Semana" },
-  { type: "biweekly", label: "Quinzena" },
-  { type: "monthly", label: "Mês" },
-  { type: "custom", label: "Personalizado" },
-];
+export type PeriodTab = { type: PeriodType; label: string };
 
-export function PeriodSelector({
+/**
+ * Seletor de período reaproveitado em /meu-desempenho, /metas, /dashboard e
+ * /comparativo — cada tela escolhe seus próprios `tabs` (algumas incluem
+ * "daily", outras "custom") e o `basePath` da própria rota.
+ */
+export function PeriodNav({
+  basePath,
+  tabs,
   type,
   period,
   referenceDate,
   prevHref,
   nextHref,
+  allowCustom = false,
 }: {
+  basePath: string;
+  tabs: PeriodTab[];
   type: PeriodType;
   period: Period;
   referenceDate: string;
   prevHref: string;
   nextHref: string;
+  allowCustom?: boolean;
 }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Link
             key={tab.type}
-            href={`/meu-desempenho?period=${tab.type}&date=${referenceDate}`}
+            href={`${basePath}?period=${tab.type}&date=${referenceDate}`}
             className={cn(
               "rounded-md border px-3 py-1.5 text-sm transition-colors",
               tab.type === type
@@ -40,11 +46,24 @@ export function PeriodSelector({
             {tab.label}
           </Link>
         ))}
+        {allowCustom && (
+          <Link
+            href={`${basePath}?period=custom&date=${referenceDate}`}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-sm transition-colors",
+              type === "custom"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Personalizado
+          </Link>
+        )}
       </div>
 
       {type === "custom" ? (
         <form
-          action="/meu-desempenho"
+          action={basePath}
           method="get"
           className="flex flex-wrap items-end gap-2"
         >

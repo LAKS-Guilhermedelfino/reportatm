@@ -36,8 +36,23 @@ export default async function GestorLayout({
       <AppHeader />
       <nav className="border-b border-border">
         <div className="mx-auto flex max-w-6xl gap-4 px-4 py-2 text-sm">
+          <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+          <Link href="/consultoras" className="text-muted-foreground hover:text-foreground">
+            Consultoras
+          </Link>
+          <Link href="/comparativo" className="text-muted-foreground hover:text-foreground">
+            Comparativo
+          </Link>
           <Link href="/metas" className="text-muted-foreground hover:text-foreground">
             Metas
+          </Link>
+          <Link
+            href="/configuracoes"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Configurações
           </Link>
         </div>
       </nav>

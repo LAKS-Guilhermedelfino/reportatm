@@ -8,3 +8,11 @@ export const inviteConsultantSchema = z.object({
 });
 
 export type InviteConsultantInput = z.infer<typeof inviteConsultantSchema>;
+
+export const updateConsultantSchema = z.object({
+  consultantId: z.string().uuid(),
+  fullName: z.string().trim().min(2, "Informe o nome completo."),
+  startedAt: z.string().optional(),
+});
+
+export type UpdateConsultantInput = z.infer<typeof updateConsultantSchema>;

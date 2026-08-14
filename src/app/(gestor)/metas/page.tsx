@@ -1,13 +1,12 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { todaySP, formatDateLongPtBR } from "@/lib/dates/sao-paulo";
+import { todaySP } from "@/lib/dates/sao-paulo";
 import { adjacentPeriod, getPeriod } from "@/lib/dates/periods";
 import { GOAL_INDICATORS } from "@/lib/metrics/goal-indicators";
-import { cn } from "@/lib/utils";
+import { PeriodNav, type PeriodTab } from "@/components/period-nav";
 import { GoalsGrid, type GoalGridRow } from "./goals-grid";
 import type { GoalPeriodType } from "@/lib/supabase/types";
 
-const TABS: { type: GoalPeriodType; label: string }[] = [
+const TABS: PeriodTab[] = [
   { type: "weekly", label: "Semanal" },
   { type: "biweekly", label: "Quinzenal" },
   { type: "monthly", label: "Mensal" },
@@ -100,40 +99,15 @@ export default async function MetasPage({
         </p>
       </header>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          {TABS.map((tab) => (
-            <Link
-              key={tab.type}
-              href={`/metas?period=${tab.type}&date=${referenceDate}`}
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-sm transition-colors",
-                tab.type === type
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground sm:flex-row sm:justify-between">
-          <div className="flex w-full justify-between sm:contents">
-            <Link href={prevHref} className="hover:text-foreground">
-              ‹ Anterior
-            </Link>
-            <span className="hidden text-foreground sm:inline">
-              {formatDateLongPtBR(period.start)} — {formatDateLongPtBR(period.end)}
-            </span>
-            <Link href={nextHref} className="hover:text-foreground">
-              Seguinte ›
-            </Link>
-          </div>
-          <span className="text-center text-foreground sm:hidden">
-            {formatDateLongPtBR(period.start)} — {formatDateLongPtBR(period.end)}
-          </span>
-        </div>
-      </div>
+      <PeriodNav
+        basePath="/metas"
+        tabs={TABS}
+        type={type}
+        period={period}
+        referenceDate={referenceDate}
+        prevHref={prevHref}
+        nextHref={nextHref}
+      />
 
       <GoalsGrid
         companyId={companyId}
