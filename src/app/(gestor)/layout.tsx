@@ -48,6 +48,9 @@ export default async function GestorLayout({
           <Link href="/metas" className="text-muted-foreground hover:text-foreground">
             Metas
           </Link>
+          <Link href="/relatorios" className="text-muted-foreground hover:text-foreground">
+            Relatórios
+          </Link>
           <Link
             href="/configuracoes"
             className="text-muted-foreground hover:text-foreground"
