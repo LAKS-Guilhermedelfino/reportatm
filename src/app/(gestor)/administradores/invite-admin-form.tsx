@@ -5,15 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteAdminUser, type InviteAdminUserState } from "@/lib/actions/invite-admin-user";
+import { generatePassword } from "@/lib/generate-password";
 
 const initialState: InviteAdminUserState = {};
-
-function generatePassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
-  const bytes = new Uint32Array(14);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
-}
 
 export function InviteAdminForm({ companyId }: { companyId: string }) {
   const [open, setOpen] = useState(false);

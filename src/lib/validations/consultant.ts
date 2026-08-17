@@ -5,6 +5,7 @@ export const inviteConsultantSchema = z.object({
   email: z.string().trim().email("Informe um e-mail válido."),
   companyId: z.string().uuid(),
   startedAt: z.string().optional(),
+  password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
 });
 
 export type InviteConsultantInput = z.infer<typeof inviteConsultantSchema>;
