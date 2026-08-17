@@ -46,12 +46,64 @@ function formatRankValue(key: RankKey, value: number | null): string {
   return String(value);
 }
 
+// Altura do bloco do pódio por posição — 1º mais alto, sempre no centro.
+const PEDESTAL_HEIGHT: Record<number, string> = { 1: "h-24", 2: "h-16", 3: "h-11" };
+const AVATAR_SIZE: Record<number, "lg" | "md"> = { 1: "lg", 2: "md", 3: "md" };
+// Ordem visual do pódio: 2º à esquerda, 1º no centro, 3º à direita.
+const PODIUM_ORDER = [2, 1, 3];
+
+type RankedEntry = { c: ConsultantTeamData; value: number | null };
+
+function PodiumSlot({
+  entry,
+  position,
+  selected,
+}: {
+  entry: RankedEntry;
+  position: number;
+  selected: RankKey;
+}) {
+  const { c, value } = entry;
+  const isFirst = position === 1;
+
+  return (
+    <Link
+      href={`/consultoras/${c.id}`}
+      className="flex flex-1 flex-col items-center gap-2 transition-opacity hover:opacity-80"
+    >
+      {isFirst && <Trophy className="size-5 text-primary" aria-label="1º lugar" />}
+      <Avatar fullName={c.fullName} src={c.avatarUrl} size={AVATAR_SIZE[position]} />
+      <p className="w-full truncate text-center text-xs font-medium text-foreground">
+        {c.fullName}
+      </p>
+      <p className="heading text-sm text-foreground">{formatRankValue(selected, value)}</p>
+      <div
+        className={cn(
+          "flex w-full items-start justify-center rounded-t-lg pt-1.5",
+          PEDESTAL_HEIGHT[position],
+          isFirst
+            ? "border border-primary/40 bg-primary/15"
+            : "border border-border bg-surface-2",
+        )}
+      >
+        <span
+          className={cn(
+            "heading text-lg",
+            isFirst ? "text-primary" : "text-muted-foreground",
+          )}
+        >
+          {position}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 /**
- * Ranking visual (avatar + posição + valor) — tela inicial do gestor. O
- * troféu (única cor de acento no card) marca só a 1ª posição; as demais
- * posições usam um selo neutro, sem cor decorativa por rank (seção 4 do
- * manual de marca não define paleta de posição, e "cor só como acento" é
- * regra — inventar ouro/prata/bronze fugiria disso).
+ * Ranking em estilo pódio (top 3) + lista compacta pro resto — tela
+ * inicial do gestor. Cor por posição fica só no 1º lugar (laranja da
+ * marca, o acento) — 2º/3º se diferenciam pela altura do bloco, não por
+ * cor nova (o manual de marca não define paleta de posição/medalha).
  */
 export function Ranking({
   consultants,
@@ -62,16 +114,19 @@ export function Ranking({
   selected: RankKey;
   baseQuery: string;
 }) {
-  const ranked = [...consultants]
+  const ranked: RankedEntry[] = [...consultants]
     .map((c) => ({ c, value: rankValue(selected, c.totals) }))
     .sort((a, b) => (b.value ?? -Infinity) - (a.value ?? -Infinity));
+
+  const podium = ranked.slice(0, 3);
+  const rest = ranked.slice(3);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="heading text-base">Ranking</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         <div className="flex flex-wrap gap-2">
           {RANK_OPTIONS.map((opt) => (
             <Link
@@ -92,36 +147,40 @@ export function Ranking({
         {ranked.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma consultora ativa.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {ranked.map(({ c, value }, index) => {
-              const position = index + 1;
-              return (
-                <Link
-                  key={c.id}
-                  href={`/consultoras/${c.id}`}
-                  className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface-2 p-3 text-center transition-colors hover:border-primary/40"
-                >
-                  {position === 1 ? (
-                    <Trophy className="size-4 text-primary" aria-label="1º lugar" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{position}º</span>
-                  )}
-                  <div className="relative">
-                    <Avatar fullName={c.fullName} src={c.avatarUrl} size="lg" />
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border border-border bg-background text-[10px] font-medium text-foreground">
-                      {position}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs font-medium text-foreground">
-                    {c.fullName}
-                  </p>
-                  <p className="heading text-sm text-foreground">
-                    {formatRankValue(selected, value)}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
+          <>
+            <div className="flex items-end justify-center gap-3 px-2 sm:gap-6">
+              {PODIUM_ORDER.filter((position) => podium[position - 1]).map((position) => (
+                <PodiumSlot
+                  key={podium[position - 1].c.id}
+                  entry={podium[position - 1]}
+                  position={position}
+                  selected={selected}
+                />
+              ))}
+            </div>
+
+            {rest.length > 0 && (
+              <ol className="space-y-1.5 border-t border-border pt-3">
+                {rest.map(({ c, value }, index) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/consultoras/${c.id}`}
+                      className="flex items-center justify-between gap-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-surface-2"
+                    >
+                      <span className="flex min-w-0 items-center gap-2 text-foreground">
+                        <span className="w-4 shrink-0 text-muted-foreground">{index + 4}º</span>
+                        <Avatar fullName={c.fullName} src={c.avatarUrl} size="sm" />
+                        <span className="truncate">{c.fullName}</span>
+                      </span>
+                      <span className="heading shrink-0 text-foreground">
+                        {formatRankValue(selected, value)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
