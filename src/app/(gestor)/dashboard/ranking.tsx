@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatPercent } from "@/lib/format/currency";
 import {
@@ -44,6 +46,13 @@ function formatRankValue(key: RankKey, value: number | null): string {
   return String(value);
 }
 
+/**
+ * Ranking visual (avatar + posição + valor) — tela inicial do gestor. O
+ * troféu (única cor de acento no card) marca só a 1ª posição; as demais
+ * posições usam um selo neutro, sem cor decorativa por rank (seção 4 do
+ * manual de marca não define paleta de posição, e "cor só como acento" é
+ * regra — inventar ouro/prata/bronze fugiria disso).
+ */
 export function Ranking({
   consultants,
   selected,
@@ -80,27 +89,40 @@ export function Ranking({
           ))}
         </div>
 
-        <ol className="space-y-1.5">
-          {ranked.map(({ c, value }, index) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="text-foreground">
-                <span className="mr-2 text-muted-foreground">{index + 1}.</span>
-                {c.fullName}
-              </span>
-              <span className="heading text-foreground">
-                {formatRankValue(selected, value)}
-              </span>
-            </li>
-          ))}
-          {ranked.length === 0 && (
-            <li className="text-sm text-muted-foreground">
-              Nenhuma consultora ativa.
-            </li>
-          )}
-        </ol>
+        {ranked.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma consultora ativa.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {ranked.map(({ c, value }, index) => {
+              const position = index + 1;
+              return (
+                <Link
+                  key={c.id}
+                  href={`/consultoras/${c.id}`}
+                  className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface-2 p-3 text-center transition-colors hover:border-primary/40"
+                >
+                  {position === 1 ? (
+                    <Trophy className="size-4 text-primary" aria-label="1º lugar" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{position}º</span>
+                  )}
+                  <div className="relative">
+                    <Avatar fullName={c.fullName} src={c.avatarUrl} size="lg" />
+                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border border-border bg-background text-[10px] font-medium text-foreground">
+                      {position}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs font-medium text-foreground">
+                    {c.fullName}
+                  </p>
+                  <p className="heading text-sm text-foreground">
+                    {formatRankValue(selected, value)}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

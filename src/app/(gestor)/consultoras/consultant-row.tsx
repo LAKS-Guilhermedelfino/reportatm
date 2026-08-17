@@ -9,6 +9,7 @@ import {
   setConsultantActive,
   type UpdateConsultantState,
 } from "@/lib/actions/update-consultant";
+import { AvatarUpload } from "./avatar-upload";
 
 export type ConsultantRowData = {
   id: string;
@@ -16,6 +17,7 @@ export type ConsultantRowData = {
   email: string;
   started_at: string | null;
   active: boolean;
+  avatar_url: string | null;
 };
 
 const initialState: UpdateConsultantState = {};
@@ -38,7 +40,7 @@ export function ConsultantRow({ consultant }: { consultant: ConsultantRowData })
   if (editing) {
     return (
       <tr className="border-b border-border">
-        <td colSpan={5} className="p-3">
+        <td colSpan={6} className="p-3">
           <form action={updateAction} className="flex flex-wrap items-end gap-2">
             <input type="hidden" name="consultantId" value={consultant.id} />
             <Input
@@ -77,6 +79,13 @@ export function ConsultantRow({ consultant }: { consultant: ConsultantRowData })
 
   return (
     <tr className="border-b border-border last:border-0">
+      <td className="px-3 py-2">
+        <AvatarUpload
+          consultantId={consultant.id}
+          fullName={consultant.full_name}
+          avatarUrl={consultant.avatar_url}
+        />
+      </td>
       <td className="px-3 py-2 text-foreground">{consultant.full_name}</td>
       <td className="px-3 py-2 text-muted-foreground">{consultant.email}</td>
       <td className="px-3 py-2 text-muted-foreground">

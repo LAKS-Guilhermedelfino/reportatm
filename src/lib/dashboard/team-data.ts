@@ -15,6 +15,7 @@ export type ResolvedGoal = Record<GoalIndicatorKey, number | null> | null;
 export type ConsultantTeamData = {
   id: string;
   fullName: string;
+  avatarUrl: string | null;
   totals: DailyReportCounts;
   fillRate: FillRate;
   goal: ResolvedGoal;
@@ -88,7 +89,7 @@ export async function loadTeamData(
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .eq("company_id", companyId)
         .eq("role", "consultora")
         .eq("active", true)
@@ -162,7 +163,7 @@ export async function loadTeamData(
         businessDaysInPeriod,
       );
       const goal = goalsByConsultant.get(c.id) ?? defaultGoal;
-      return { id: c.id, fullName: c.full_name, totals, fillRate, goal };
+      return { id: c.id, fullName: c.full_name, avatarUrl: c.avatar_url, totals, fillRate, goal };
     },
   );
 

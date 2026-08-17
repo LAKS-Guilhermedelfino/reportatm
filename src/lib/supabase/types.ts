@@ -48,6 +48,7 @@ export interface Database {
           role: UserRole;
           active: boolean;
           started_at: string | null;
+          avatar_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -59,6 +60,7 @@ export interface Database {
           role: UserRole;
           active?: boolean;
           started_at?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

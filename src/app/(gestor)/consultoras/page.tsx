@@ -18,7 +18,7 @@ export default async function ConsultorasPage() {
 
   const { data: consultants } = await supabase
     .from("profiles")
-    .select("id, full_name, email, started_at, active")
+    .select("id, full_name, email, started_at, active, avatar_url")
     .eq("company_id", companyId)
     .eq("role", "consultora")
     .order("full_name");
@@ -39,6 +39,7 @@ export default async function ConsultorasPage() {
         <table className="w-full min-w-max text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2 text-left text-muted-foreground">
+              <th className="px-3 py-2 font-medium">Foto</th>
               <th className="px-3 py-2 font-medium">Nome</th>
               <th className="px-3 py-2 font-medium">E-mail</th>
               <th className="px-3 py-2 font-medium">Início</th>
@@ -52,7 +53,7 @@ export default async function ConsultorasPage() {
             ))}
             {(consultants ?? []).length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
                   Nenhuma consultora cadastrada ainda.
                 </td>
               </tr>
