@@ -31,6 +31,8 @@ export default async function GestorLayout({
     redirect("/");
   }
 
+  const isAdmin = profile.role === "admin";
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -57,6 +59,14 @@ export default async function GestorLayout({
           >
             Configurações
           </Link>
+          {isAdmin && (
+            <Link
+              href="/administradores"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Administradores
+            </Link>
+          )}
         </div>
       </nav>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
